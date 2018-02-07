@@ -23,7 +23,7 @@ ELEMENTS = [
     ("Mn", 54.94),  ("Fe", 55.85),  ("Co", 58.93),  ("Ni", 58.69),
     ("Cu", 63.55),  ("Zn", 65.39),  ("Ga", 69.72),  ("Ge", 72.64),
     ("As", 74.92),  ("Se", 78.96),  ("Br", 79.9),   ("Kr", 83.79),
-    ("Rb", 85.47),  ("Sr", 87.62),  ("Y8", 8.91),   ("Zr", 91.22),
+    ("Rb", 85.47),  ("Sr", 87.62),  ("Y",  88.91),  ("Zr", 91.22),
     ("Nb", 92.91),  ("Mo", 95.96),  ("Tc", 98.0),   ("Ru", 101.1),
     ("Rh", 102.9),  ("Pd", 106.4),  ("Ag", 107.9),  ("Cd", 112.4),
     ("In", 114.8),  ("Sn", 118.7),  ("Sb", 121.8),  ("Te", 127.6),
@@ -51,19 +51,63 @@ BOUNDARY_MARGIN = 0.8
 
 DEFAULT_XYZ_COMMENT = "generated with nme"
 
+## WRAPPER FUNCTIONS FOR INTERACTING WITH ELEMENTS ARRAY #######################
+
 def symbol_to_atomic_number(symbol):
-    """ Convert an element's symbol to its atomic number
-
-    Args:
-        symbol: A string containing the symbol of an element
-
-    Returns:
-        An integer corresponding to the element's atomic number
-    """
+    """ Convert an element's symbol to its atomic number """
 
     for i in range(1, len(ELEMENTS)):
         if (ELEMENTS[i][0].lower() == symbol.lower()):
             return i
+
+def symbol_to_atomic_mass(symbol):
+    """ Convert an element's symbol to its atomic mass """
+
+    first = True
+    for element in ELEMENTS:
+        if (first):
+            first = False
+        elif (element[0].lower() == symbol.lower()):
+            return element[1]
+
+def atomic_number_to_symbol(atomic_number):
+    """ Convert an atomic number to a symbol """
+
+    return ELEMENTS[atomic_number][0]
+
+def atomic_number_to_atomic_mass(atomic_number):
+    """ Convert an atomic number to that element's atomic mass """
+
+    return ELEMENTS[atomic_number][1]
+
+def atomic_mass_to_atomic_number(atomic_mass):
+    """ Convert an atomic mass to an atomic number by guessing what the element
+    is by finding the element with the closest atomic mass """
+
+    # return first item of sorted list of tuples where the first index is the
+    # atomic number and the second index is the absolute value of the
+    # difference in that element's atomic mass and the provided atomic mass
+    return sorted(
+        zip(
+            range(len(ELEMENTS)),
+            [
+                abs(element[1] - atomic_mass)
+                    if (element is not None)
+                    else 1e100
+                for element in ELEMENTS
+            ]
+        ),
+        key = lambda x: x[1]
+    )[0][0]
+
+def atomic_mass_to_symbol(atomic_mass):
+    """ Convert an atomic mass to a symbol """
+
+    return atomic_number_to_symbol(
+        atomic_mass_to_atomic_number(atomic_mass)
+    )
+
+################################################################################
 
 class Atom(object):
 
