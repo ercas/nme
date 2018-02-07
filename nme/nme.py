@@ -13,6 +13,7 @@ DEFAULT_BOND_RADIUS = 1.8
 
 # Periodic Table (parsed from http://periodic.lanl.gov/index.shtml)
 ELEMENTS = [
+    None, # no 0th element
     ("H",  1.008),  ("He", 4.003),  ("Li", 6.94),   ("Be", 9.012),
     ("B",  10.81),  ("C",  12.01),  ("N",  14.01),  ("O",  16.0),
     ("F",  19.0),   ("Ne", 20.18),  ("Na", 22.99),  ("Mg", 24.31),
@@ -60,9 +61,9 @@ def symbol_to_atomic_number(symbol):
         An integer corresponding to the element's atomic number
     """
 
-    for i in range(len(ELEMENTS)):
+    for i in range(1, len(ELEMENTS)):
         if (ELEMENTS[i][0].lower() == symbol.lower()):
-            return i + 1
+            return i
 
 class Atom(object):
 
