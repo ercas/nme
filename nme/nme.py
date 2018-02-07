@@ -376,15 +376,19 @@ def write_lammps(molecules, filename):
     all_z = [atom.xyz[2] for atom in molecule]
 
     unique_elements = list(
-        set([
-            atom.element
-            for atom in all_atoms
-        ])
+        sorted(
+            set([
+                atom.element
+                for atom in all_atoms
+            ])
+        )
     )
 
-    atom_element_map = dict(zip(
-        unique_elements, range(1, len(unique_elements) + 1)
-    ))
+    atom_element_map = dict(
+        zip(
+            unique_elements, range(1, len(unique_elements) + 1)
+        )
+    )
 
     i_atom = 0
     i_mol = 0
