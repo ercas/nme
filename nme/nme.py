@@ -112,14 +112,25 @@ class Molecule(object):
 
         return copy.deepcopy(self)
 
-    def append(self, atom):
-        """ Append an atom to the atoms array
+    def append(self, other):
+        """ Append atoms or molecules to the atoms array
 
         Args:
-            atom: An Atom object
+            other: An Atom or Molecule object or list of objects
         """
 
-        self.atoms.append(atom)
+        if (type(other) != list):
+            other = [other]
+        for object_ in other:
+            if (type(object_) == Atom):
+                self.atoms.append(object_)
+            elif (type(object_) == Molecule):
+                self.atoms += object_.copy().atoms
+            else:
+                raise TypeError(
+                    "Object of type %s cannot be appended to Molecule"
+                    % type(object_)
+                )
 
     def offset(self, offset):
         """ Offset the current molecule
@@ -187,6 +198,11 @@ class Molecule(object):
                     atom.element, atom.xyz[0], atom.xyz[1], atom.xyz[2]
                 ))
 
+    def write_lammps(self, filename):
+        """ Syntactic sugar """
+
+        write_lammps(self, filename)
+
     @property
     def bonds(self):
         return self.find_bonds()
@@ -214,15 +230,40 @@ class Molecule(object):
     def __delitem__(self, key):
         del self.attributes[key]
 
+    # Syntactic sugar
+    def __iadd__(self, other):
+        self.append(other)
+        return self
+    def __add__(self, other):
+        new = Molecule()
+        new += self
+        new += other
+        return new
+
 class Workspace(object):
 
     def __init__(self):
         self.molecules = []
         self.attributes = {}
 
-    def append(self, molecule):
-        self.molecules.append(molecule)
+    def append(self, object_):
+        """ Append atoms or molecules to the workspace
 
+        Args:
+            other: An Atom or Molecule object or list of objects
+        """
+
+        if (type(object_) == Molecule):
+            self.molecules.append(object_)
+        elif (type(object_) == Atom):
+            new_molecule = Molecule()
+            new_molecule.append(object_)
+            self.molecules.append(new_molecule)
+        else:
+            raise TypeError(
+                "Object of type %s cannot be appended to Workspace"
+                % type(object_)
+            )
 
     def write_xyz(self, filename, comment = DEFAULT_XYZ_COMMENT):
         """ Write the current workspace to an XYZ file
@@ -259,6 +300,15 @@ class Workspace(object):
     def __delitem__(self, key):
         del self.attributes[key]
 
+    # Syntactic sugar
+    def __iadd__(self, other):
+        self.append(other)
+        return self
+    def __add__(self, other):
+        new = Workspace()
+        new += self
+        new += other
+        return new
 
 def read_xyz(filepath):
     """ Read a .xyz file into an array of atoms
