@@ -415,9 +415,9 @@ def write_lammps(molecules, filename):
     for molecule in molecules:
         all_atoms += molecule.atoms
 
-    all_x = [atom.xyz[0] for atom in molecule]
-    all_y = [atom.xyz[1] for atom in molecule]
-    all_z = [atom.xyz[2] for atom in molecule]
+    all_x = [atom.xyz[0] for atom in all_atoms]
+    all_y = [atom.xyz[1] for atom in all_atoms]
+    all_z = [atom.xyz[2] for atom in all_atoms]
 
     unique_elements = list(
         sorted(
@@ -444,7 +444,7 @@ def write_lammps(molecules, filename):
         # Summary
         f.write(
             "%d atoms\n0 bonds\n0 angles\n0 dihedrals\n0 impropers\n\n"
-            % len(molecule.atoms)
+            % len(all_atoms)
         )
 
         # Summary - types
