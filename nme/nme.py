@@ -248,6 +248,46 @@ class Molecule(object):
 
         write_lammps(self, filename)
 
+    def bbox_intersects(self, molecule, padding = 0):
+        """ Test whether the bounding box of the current molecule intersects
+        the bounding box of another molecule
+
+        Args:
+            molecule: The other molecule
+            padding: A number to pad the bounding boxes by to increase their
+                size
+
+        Returns:
+            True if the bounding box of this molecule intersects the bounding
+            box of another molecule; False otherwise.
+        """
+
+        bbox_self = self.bbox
+        bbox_other = molecule.bbox
+
+        if (padding != 0):
+            padding_np = numpy.array([padding] * 3)
+            bbox_self[0] -= padding_np
+            bbox_self[1] += padding_np
+            bbox_other[0] -= padding_np
+            bbox_other[1] += padding_np
+
+        return numpy.all(
+            (bbox_self[1] >= bbox_other[0])
+            & (bbox_self[0] <= bbox_other[1])
+        )
+
+    @property
+    def bbox(self):
+        coords = numpy.array([atom.xyz for atom in self.atoms])
+        x = coords[:,0]
+        y = coords[:,1]
+        z = coords[:,2]
+        return numpy.array([
+            [min(x), min(y), min(z)],
+            [max(x), max(y), max(z)]
+        ])
+
     @property
     def bonds(self):
         return self.find_bonds()
@@ -344,6 +384,17 @@ class Workspace(object):
         return self.attributes[key]
     def __delitem__(self, key):
         del self.attributes[key]
+
+    # Iteration procedures
+    def __iter__(self):
+        self.molecule_iter_index = -1
+        return self
+    def __next__(self):
+        self.molecule_iter_index += 1
+        if (self.molecule_iter_index == len(self.molecules)):
+            raise StopIteration
+        else:
+            return self.molecules[self.molecule_iter_index]
 
     # Syntactic sugar
     def __iadd__(self, other):
