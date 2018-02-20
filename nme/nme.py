@@ -47,7 +47,7 @@ ELEMENTS = [
 ]
 
 # The width, in angstroms, of the margin around the bounding box
-BOUNDARY_MARGIN = 0.8
+DEFAULT_BOUNDARY_MARGIN = 0.8
 
 DEFAULT_XYZ_COMMENT = "generated with nme"
 
@@ -243,10 +243,10 @@ class Molecule(object):
                     atom.element, atom.xyz[0], atom.xyz[1], atom.xyz[2]
                 ))
 
-    def write_lammps(self, filename):
+    def write_lammps(self, filename, *args, **kwargs):
         """ Syntactic sugar """
 
-        write_lammps(self, filename)
+        write_lammps(self, filename, *args, **kwargs)
 
     def bbox_intersects(self, molecule, padding = 0):
         """ Test whether the bounding box of the current molecule intersects
@@ -372,10 +372,23 @@ class Workspace(object):
                         atom.element, atom.xyz[0], atom.xyz[1], atom.xyz[2]
                     ))
 
-    def write_lammps(self, filename):
+    def write_lammps(self, filename, *args, **kwargs):
         """ Syntactic sugar """
 
-        write_lammps(self.molecules, filename)
+        write_lammps(self.molecules, filename, *args, **kwargs)
+
+    @property
+    def bbox(self):
+        all_atoms = []
+        for molecule in self.molecules:
+            all_atoms += molecule.atoms
+        all_x = [atom.xyz[0] for atom in all_atoms]
+        all_y = [atom.xyz[1] for atom in all_atoms]
+        all_z = [atom.xyz[2] for atom in all_atoms]
+        return [
+            numpy.array([min(all_x), min(all_y), min(all_z)]),
+            numpy.array([max(all_x), max(all_y), max(all_z)])
+        ]
 
     # Dict-like storage of values
     def __setitem__(self, key, value):
@@ -451,12 +464,19 @@ def read_xyz(filepath):
 
     return Molecule(atoms)
 
-def write_lammps(molecules, filename):
+def write_lammps(molecules, filename, bbox = None,
+                 boundary_margin = DEFAULT_BOUNDARY_MARGIN):
     """ Write the given molecules to a LAMMPS data file
 
     Args:
         molecules: A molecule or array of molecules to be written
         filename: The path that the LAMMPS data should be written to
+        bbox: The bounding box of the simulation area, specified as a pair of
+            cartesian coordinates corresponding to the minimum coordinates and
+            the maximum coordinates (e.g. [ [0, 0, 0], [1, 1, 1] ])
+        boundary_margin: If a bounding box is not supplied, compute a bounding
+            box automatically by padding the area taken up by the molecules by
+            this many atoms
     """
 
     if (type(molecules) != list):
@@ -465,10 +485,6 @@ def write_lammps(molecules, filename):
     all_atoms = []
     for molecule in molecules:
         all_atoms += molecule.atoms
-
-    all_x = [atom.xyz[0] for atom in all_atoms]
-    all_y = [atom.xyz[1] for atom in all_atoms]
-    all_z = [atom.xyz[2] for atom in all_atoms]
 
     unique_elements = list(
         sorted(
@@ -504,16 +520,26 @@ def write_lammps(molecules, filename):
             % len(unique_elements)
         )
 
-        # Bounds
-        f.write("%0.6f %0.6f xlo xhi\n" % (
-            min(all_x) - BOUNDARY_MARGIN, max(all_x) + BOUNDARY_MARGIN
-        ))
-        f.write("%0.6f %0.6f ylo yhi\n" % (
-            min(all_y) - BOUNDARY_MARGIN, max(all_y) + BOUNDARY_MARGIN
-        ))
-        f.write("%0.6f %0.6f zlo zhi\n\n" % (
-            min(all_z) - BOUNDARY_MARGIN, max(all_z) + BOUNDARY_MARGIN
-        ))
+        # Compute bbox if necessary
+        if (bbox is None):
+            all_x = [atom.xyz[0] for atom in all_atoms]
+            all_y = [atom.xyz[1] for atom in all_atoms]
+            all_z = [atom.xyz[2] for atom in all_atoms]
+            bbox = [
+                [
+                    min(all_x) - boundary_margin,
+                    min(all_y) - boundary_margin,
+                    min(all_z) - boundary_margin
+                ],
+                [
+                    max(all_x) + boundary_margin,
+                    max(all_y) + boundary_margin,
+                    max(all_z) + boundary_margin
+                ]
+            ]
+        f.write("%0.6f %0.6f xlo xhi\n" % (bbox[0][0], bbox[1][0]))
+        f.write("%0.6f %0.6f ylo yhi\n" % (bbox[0][1], bbox[1][1]))
+        f.write("%0.6f %0.6f zlo zhi\n\n" % (bbox[0][2], bbox[1][2]))
 
         # Masses of involved elements
         f.write("Masses\n\n")
