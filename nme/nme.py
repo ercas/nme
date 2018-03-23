@@ -188,7 +188,7 @@ class Molecule(object):
         np_offset = numpy.array(offset)
 
         for atom in self.atoms:
-            atom.xyz += np_offset
+            numpy.add(atom.xyz, np_offset, out = atom.xyz, casting = "unsafe")
 
     def move_to(self, xyz):
         """ Move the molecule such that its centroid is at the desired position
@@ -199,6 +199,42 @@ class Molecule(object):
         """
 
         self.offset(numpy.array(xyz) - self.centroid)
+
+    def rotate(self, angle_x, angle_y, angle_z, degrees = False):
+        # https://www.siggraph.org/education/materials/HyperGraph/modeling/mod_tran/3drota.htm
+
+        if (degrees == True):
+            angle_x = numpy.radians(angle_x)
+            angle_y = numpy.radians(angle_y)
+            angle_z = numpy.radians(angle_z)
+
+        rx = numpy.array([
+            [1, 0, 0, 0],
+            [0, numpy.cos(angle_x), numpy.sin(angle_x), 0],
+            [0, -numpy.sin(angle_x), numpy.cos(angle_x), 0],
+            [0, 0, 0, 1]
+        ])
+        ry = numpy.array([
+            [numpy.cos(angle_y), 0, -numpy.sin(angle_y), 0],
+            [0, 1, 0, 0],
+            [numpy.sin(angle_y), 0, numpy.cos(angle_y), 0],
+            [0, 0, 0, 1]
+        ])
+        rz = numpy.array([
+            [numpy.cos(angle_z), numpy.sin(angle_z), 0, 0],
+            [-numpy.sin(angle_z), numpy.cos(angle_z), 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ])
+
+        for atom in self.atoms:
+            current_centroid = self.centroid
+            self.move_to([0, 0, 0])
+
+            transpose = numpy.append(atom.xyz[numpy.newaxis, :].T, 1)
+            atom.xyz = (rx.dot(ry).dot(rz).dot(transpose)).T[:3]
+
+            self.move_to(current_centroid)
 
     def find_bonds(self, bond_radius = DEFAULT_BOND_RADIUS):
         """ Find bonds between molecules
