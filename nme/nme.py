@@ -200,29 +200,39 @@ class Molecule(object):
 
         self.offset(numpy.array(xyz) - self.centroid)
 
-    def rotate(self, angle_x, angle_y, angle_z, degrees = False):
+    def rotate(self, theta, phi, psi, degrees = False):
+        """ Rotate the molecule about its centroid in 3D space
+
+        Args:
+            theta: The angle to rotate the molecule around its X axis
+            phi: The angle to rotate the molecule around its Y axis
+            psi: The angle to rotate the molecule around its Z axis
+            degrees: If True, the angles given are assumed to be in degrees and
+                will be converted to radians before being used
+        """
+
         # https://www.siggraph.org/education/materials/HyperGraph/modeling/mod_tran/3drota.htm
 
         if (degrees == True):
-            angle_x = numpy.radians(angle_x)
-            angle_y = numpy.radians(angle_y)
-            angle_z = numpy.radians(angle_z)
+            theta = numpy.radians(theta)
+            phi = numpy.radians(phi)
+            psi = numpy.radians(psi)
 
         rx = numpy.array([
             [1, 0, 0, 0],
-            [0, numpy.cos(angle_x), numpy.sin(angle_x), 0],
-            [0, -numpy.sin(angle_x), numpy.cos(angle_x), 0],
+            [0, numpy.cos(theta), numpy.sin(theta), 0],
+            [0, -numpy.sin(theta), numpy.cos(theta), 0],
             [0, 0, 0, 1]
         ])
         ry = numpy.array([
-            [numpy.cos(angle_y), 0, -numpy.sin(angle_y), 0],
+            [numpy.cos(phi), 0, -numpy.sin(phi), 0],
             [0, 1, 0, 0],
-            [numpy.sin(angle_y), 0, numpy.cos(angle_y), 0],
+            [numpy.sin(phi), 0, numpy.cos(phi), 0],
             [0, 0, 0, 1]
         ])
         rz = numpy.array([
-            [numpy.cos(angle_z), numpy.sin(angle_z), 0, 0],
-            [-numpy.sin(angle_z), numpy.cos(angle_z), 0, 0],
+            [numpy.cos(psi), numpy.sin(psi), 0, 0],
+            [-numpy.sin(psi), numpy.cos(psi), 0, 0],
             [0, 0, 1, 0],
             [0, 0, 0, 1]
         ])
