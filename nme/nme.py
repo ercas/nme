@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+.. |xyz| replace:: A tuple, list, or numpy array of size 3
+"""
+
 import copy
 import json
 import numpy
@@ -112,12 +116,11 @@ def atomic_mass_to_symbol(atomic_mass):
 class Atom(object):
 
     def __init__(self, element, xyz):
-        """ Initialize Atom object
+        """ Initialize an :class:`Atom`. This is the fundamental object of
+        ``nme``.
 
-        Args:
-            element:
-            xyz: A tuple or list of size 3, corresponding to the atom's
-                coordinates
+        :param int element: The atomic number of the element
+        :param xyz: |xyz| corresponding to the atom's coordinates
         """
 
         self.element = element
@@ -135,10 +138,12 @@ class Atom(object):
 class Molecule(object):
 
     def __init__(self, atoms = None):
-        """ Initialize Molecule object
+        """ Initialize a :class:`Molecule`. A :class:`Molecule` acts a
+        container for :class:`Atom` objects and can be used to manipulate
+        groups of atoms or write a group of atoms to the disk.
 
-        Args:
-            atoms: An array of atoms
+        :param list atoms: (optional) A list of :class:`Atom` objects. If no
+            atoms are provied then an empty molecule is returned.
         """
 
         if (atoms == None):
@@ -149,10 +154,10 @@ class Molecule(object):
         self.attributes = {}
 
     def copy(self):
-        """ Create a copy of this Molecule
+        """ Create a copy of this molecule
 
-        Returns:
-            A copy of this Molecule
+        :return: A copy of this molecule
+        :rtype: :class:`Molecule`
         """
 
         return copy.deepcopy(self)
@@ -160,8 +165,8 @@ class Molecule(object):
     def append(self, other):
         """ Append atoms or molecules to the atoms array
 
-        Args:
-            other: An Atom or Molecule object or list of objects
+        :param other: An :class:`Atom`, :class:`Molecule`, or a list of atoms
+            and molecules
         """
 
         if (type(other) != list):
@@ -180,9 +185,8 @@ class Molecule(object):
     def offset(self, offset):
         """ Offset the current molecule
 
-        Args:
-            offset: A tuple or list of size 3, corresponding to the translation
-                that should be applied to all of the molecule's atoms
+        :param offset: |xyz| corresponding to the translation that should be
+            applied to all of the molecule's atoms
         """
 
         np_offset = numpy.array(offset)
@@ -193,9 +197,8 @@ class Molecule(object):
     def move_to(self, xyz):
         """ Move the molecule such that its centroid is at the desired position
 
-        Args:
-            xyz: A tuple or list of size 3, corresponding to the location that
-                the molecule should be moved to
+        :param xyz: |xyz|, corresponding to the location that the molecule
+            should be moved to
         """
 
         self.offset(numpy.array(xyz) - self.centroid)
@@ -203,12 +206,11 @@ class Molecule(object):
     def rotate(self, theta, phi, psi, degrees = False):
         """ Rotate the molecule about its centroid in 3D space
 
-        Args:
-            theta: The angle to rotate the molecule around its X axis
-            phi: The angle to rotate the molecule around its Y axis
-            psi: The angle to rotate the molecule around its Z axis
-            degrees: If True, the angles given are assumed to be in degrees and
-                will be converted to radians before being used
+        :param float theta: The angle to rotate the molecule around its X axis
+        :param float phi: The angle to rotate the molecule around its Y axis
+        :param float psi: The angle to rotate the molecule around its Z axis
+        :param bool degrees: (optional) If True, the angles given are assumed
+            to be in degrees and will be converted to radians before being used
         """
 
         # https://www.siggraph.org/education/materials/HyperGraph/modeling/mod_tran/3drota.htm
@@ -249,13 +251,11 @@ class Molecule(object):
     def find_bonds(self, bond_radius = DEFAULT_BOND_RADIUS):
         """ Find bonds between molecules
 
-        Args:
-            bond_radius: The distance, in angstroms, between two atoms under
-                which a bond will be assumed
-
-        Returns:
-            A two-dimensional array of atoms where each pair of atoms
+        :param float bond_radius: (optional) The distance, in angstroms,
+            between two atoms under which a bond will be assumed
+        :return: A two-dimensional array of atoms where each pair of atoms
             represents a bond
+        :rtype: list
         """
 
         all_coords = [atom.xyz for atom in self]
@@ -277,9 +277,8 @@ class Molecule(object):
     def write_xyz(self, filename, comment = DEFAULT_XYZ_COMMENT):
         """ Write the current molecule to an XYZ file
 
-        Args:
-            filename: The path that the XYZ data should be written to
-            comment: A comment to include in the XYZ file
+        :param str filename: The path that the XYZ data should be written to
+        :param str comment: (optional) A comment to include in the XYZ file
         """
 
         with open(filename, "w") as f:
@@ -290,7 +289,7 @@ class Molecule(object):
                 ))
 
     def write_lammps(self, filename, *args, **kwargs):
-        """ Syntactic sugar """
+        """ Syntactic sugar: see :meth:`nme.nme.write_lammps` """
 
         write_lammps(self, filename, *args, **kwargs)
 
@@ -298,14 +297,12 @@ class Molecule(object):
         """ Test whether the bounding box of the current molecule intersects
         the bounding box of another molecule
 
-        Args:
-            molecule: The other molecule
-            padding: A number to pad the bounding boxes by to increase their
-                size
-
-        Returns:
-            True if the bounding box of this molecule intersects the bounding
-            box of another molecule; False otherwise.
+        :param Molecule molecule: The other molecule
+        :param float padding: (optional) A number to pad the bounding boxes by
+            to increase their size
+        :return: True if the bounding box of this molecule intersects the
+            bounding box of another molecule; False otherwise.
+        :rtype: bool
         """
 
         bbox_self = self.bbox
@@ -374,14 +371,18 @@ class Molecule(object):
 class Workspace(object):
 
     def __init__(self):
+        """ Initialize a :class:`Workspace`. A Workspace is a container for
+        :class:`Atom`s and :class:`Molecule`s. The primary purpose of a
+        Workspace is to facilitate writing multiple atoms and molecules to a
+        single output file. """
+
         self.molecules = []
         self.attributes = {}
 
     def append(self, object_):
         """ Append atoms or molecules to the workspace
 
-        Args:
-            other: An Atom or Molecule object or list of objects
+        :param object_: An `Atom` or `Molecule`
         """
 
         if (type(object_) == Molecule):
@@ -399,9 +400,8 @@ class Workspace(object):
     def write_xyz(self, filename, comment = DEFAULT_XYZ_COMMENT):
         """ Write the current workspace to an XYZ file
 
-        Args:
-            filename: The path that the XYZ data should be written to
-            comment: A comment to include in the XYZ file
+        :param str filename: The path that the XYZ data should be written to
+        :param str comment: (optional) A comment to include in the XYZ file
         """
 
         with open(filename, "w") as f:
@@ -419,7 +419,7 @@ class Workspace(object):
                     ))
 
     def write_lammps(self, filename, *args, **kwargs):
-        """ Syntactic sugar """
+        """ Syntactic sugar: see :meth:`nme.nme.write_lammps`"""
 
         write_lammps(self.molecules, filename, *args, **kwargs)
 
@@ -468,11 +468,9 @@ class Workspace(object):
 def read_xyz(filepath):
     """ Read a .xyz file into an array of atoms
 
-    Args:
-        filepath: The path of the xyz file
-
-    Returns:
-        A Molecule object of the atoms in the .xyz file
+    :param str filepath: The path of the xyz file
+    :return: A :class:`Molecule` object containing the atoms in the .xyz file
+    :rtype: Molecule
     """
 
     atoms = []
@@ -514,15 +512,14 @@ def write_lammps(molecules, filename, bbox = None,
                  boundary_margin = DEFAULT_BOUNDARY_MARGIN):
     """ Write the given molecules to a LAMMPS data file
 
-    Args:
-        molecules: A molecule or array of molecules to be written
-        filename: The path that the LAMMPS data should be written to
-        bbox: The bounding box of the simulation area, specified as a pair of
-            cartesian coordinates corresponding to the minimum coordinates and
-            the maximum coordinates (e.g. [ [0, 0, 0], [1, 1, 1] ])
-        boundary_margin: If a bounding box is not supplied, compute a bounding
-            box automatically by padding the area taken up by the molecules by
-            this many atoms
+    :param molecules: A molecule or array of molecules to be written
+    :param filename: The path that the LAMMPS data should be written to
+    :param bbox: (optional) The bounding box of the simulation area, specified
+        as a pair of cartesian coordinates corresponding to the minimum
+        coordinates and the maximum coordinates (e.g. [ [0, 0, 0], [1, 1, 1] ])
+    :param boundary_margin: (optional) If a bounding box is not supplied,
+        compute a bounding box automatically by padding the area taken up by
+        the molecules by this many atoms
     """
 
     if (type(molecules) != list):
