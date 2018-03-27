@@ -6,6 +6,10 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/stable/config
 
+rst_epilog = """
+.. |xyz| replace:: A tuple, list, or numpy array of size 3
+"""
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
